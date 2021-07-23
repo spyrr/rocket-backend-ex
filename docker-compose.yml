@@ -10,7 +10,6 @@ services:
       - 27018:27018
   mongo-express:
     image: mongo-express
-    restart: always
     ports:
       - 22222:8081
     environment:
