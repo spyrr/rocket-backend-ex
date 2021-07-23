@@ -4,15 +4,20 @@ extern crate rocket;
 mod routes;
 
 use mongodb::{bson::doc, options::ClientOptions, Client};
+use dotenv;
 
-#[get("/")]
-fn check_health() -> &'static str {
-    "OK"
-}
+#[get("/")] fn check_health() -> &'static str { "OK" }
 
 #[rocket::main]
 async fn main() -> Result<(), rocket::Error> {
-  let db_str: &'static str = "mongodb://root:example@127.0.0.1";
+  let db_str: String = format!(
+    "mongodb://{}:{}@{}:{}",
+    dotenv::var("MONGO_USER").unwrap(),
+    dotenv::var("MONGO_PASS").unwrap(),
+    dotenv::var("MONGO_HOST").unwrap(),
+    dotenv::var("MONGO_PORT").unwrap()
+  );
+
   let client_options = ClientOptions::parse(db_str).await.unwrap();
   let client = Client::with_options(client_options).unwrap();
 
