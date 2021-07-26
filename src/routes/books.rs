@@ -12,6 +12,12 @@ pub struct Book {
   author: String
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+pub struct NonIdBook {
+  title: String,
+  author: String
+}
+
 #[get("/")]
 pub async fn get_books(db: &State<Database>) -> String {
   let collection = db.collection::<Book>("books");
@@ -35,15 +41,18 @@ pub async fn get_book(db: &State<Database>, id: &str) -> String {
 }
 
 #[post("/", data="<body>")]
-pub async fn new_book(db: &State<Database>, body: Json<Book>) -> String {
-  let Json(mut new) = body;
+pub async fn new_book(db: &State<Database>, body: Json<NonIdBook>) -> String {
+  let Json(new) = body;
   let id = nanoid!(8);
 
-  new.id = id.clone();
+  let book = Book {
+    id: nanoid!(8),
+    title: new.title,
+    author: new.author
+  };
   
   let collection = db.collection("books");
-  let rv = collection.insert_one(new, None).await;
-
+  let _rv = collection.insert_one(book, None).await;
   let book = collection.find_one(doc! { "id": id }, None).await.unwrap();
 
   println!("{:#?}", book);
@@ -51,10 +60,10 @@ pub async fn new_book(db: &State<Database>, body: Json<Book>) -> String {
 }
 
 #[put("/<id>", data="<body>")]
-pub async fn update_book(db: &State<Database>, id: &str, body: Json<Book>) -> String {
+pub async fn update_book(db: &State<Database>, id: &str, body: Json<NonIdBook>) -> String {
   let Json(book) = body;
   let collection = db.collection::<Book>("books");
-  let rv = collection.update_one(
+  let _rv = collection.update_one(
     doc! { "id": id },
     doc! {"$set": {"title": book.title, "author": book.author}},
     None
@@ -68,7 +77,6 @@ pub async fn update_book(db: &State<Database>, id: &str, body: Json<Book>) -> St
 pub async fn delete_book(db: &State<Database>, id: &str) -> &'static str {
   let filter = doc! { "id": id };
   let collection = db.collection::<Book>("books");
-  let rv = collection.delete_one(filter, None).await;
-  println!("deleted : {:#?}", rv);
+  let _rv = collection.delete_one(filter, None).await;
   "Removed"
 }
