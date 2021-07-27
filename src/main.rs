@@ -34,7 +34,7 @@ impl Fairing for CORS {
     if request.method() == Method::Options {
       info_!("{}", Paint::green("Maybe preflight?"));
       let rv = "";
-      response.set_status(Status::Ok);
+      response.set_status(Status::NoContent);
       response.set_sized_body(rv.len(), Cursor::new(rv));
     }
   }
