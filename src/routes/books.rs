@@ -7,13 +7,7 @@ use serde_json::json;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Book {
-  id: String,
-  title: String,
-  author: String
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct NonIdBook {
+  id: Option<String>,
   title: String,
   author: String
 }
@@ -41,26 +35,25 @@ pub async fn get_book(db: &State<Database>, id: &str) -> String {
 }
 
 #[post("/", data="<body>")]
-pub async fn new_book(db: &State<Database>, body: Json<NonIdBook>) -> String {
+pub async fn new_book(db: &State<Database>, body: Json<Book>) -> String {
   let Json(new) = body;
   let id = nanoid!(8);
 
   let book = Book {
-    id: nanoid!(8),
+    id: Some(id.clone()),
     title: new.title,
     author: new.author
   };
   
   let collection = db.collection("books");
   let _rv = collection.insert_one(book, None).await;
-  let book = collection.find_one(doc! { "id": id }, None).await.unwrap();
+  let book = collection.find_one(doc! { "id": id}, None).await.unwrap();
 
-  println!("{:#?}", book);
   json!(book).to_string()
 }
 
 #[put("/<id>", data="<body>")]
-pub async fn update_book(db: &State<Database>, id: &str, body: Json<NonIdBook>) -> String {
+pub async fn update_book(db: &State<Database>, id: &str, body: Json<Book>) -> String {
   let Json(book) = body;
   let collection = db.collection::<Book>("books");
   let _rv = collection.update_one(
